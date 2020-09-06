@@ -4,6 +4,9 @@ import math
 from numpy import arange, sin, pi
 import numpy as np
 import matplotlib.pyplot as plt
+import csv
+import os.path
+from os import path
 
 ## SET MAX WIDTH HERE
 maxwidth = 100
@@ -24,7 +27,7 @@ for i in btcprice:
         prices2.append(btcprice[x][1])
     x = x + 1
 
-prices = prices2[0:2050]
+prices = prices2#[0:2050]
 
 def createsin(width, lenth):
     x = 0
@@ -93,7 +96,7 @@ def average(waveslist):
         n = 0
     return ave
 
-if __name__ == '__main__':
+def bigScan():
     with concurrent.futures.ProcessPoolExecutor() as executor:
         widthlist = range(2,maxwidth)
         x = 2
@@ -120,6 +123,44 @@ if __name__ == '__main__':
         indexs.append(tindexs[i])
         widths.append(twidths[i])
         x = x + 1
+
+    x = 0
+    with open('output.csv','wb') as result_file:
+        wr=csv.writer(result_file,dialect='excel')
+        for i in amp:
+            wr.writerow([amp[x],indexs[x],widths[x]])
+            x = x + 1
+            
+def useData():
+    val = raw_input("Existing Cycle Data Detected. Do you want to use this data? (Y/N)")
+    if val == "N":
+        bigScan()
+    if val != "N" and val != "Y":
+        print "Invalid Input"
+        useData()
+
+if __name__ == '__main__':
+    
+    savedData = path.exists("output.csv")
+
+    if savedData == False:
+        print "No Existing Data Detected. Starting cycles scan."
+        bigScan()
+    else:
+        useData()
+        
+    with open('output.csv', 'rb') as f:
+        reader = csv.reader(f)
+        your_list = list(reader)
+
+    amp = []
+    indexs = []
+    widths = []
+    
+    for i in your_list:
+        amp.append(float(i[0]))
+        indexs.append(int(i[1]))
+        widths.append(int(i[2]))
         
     #find key long term cycles
 
