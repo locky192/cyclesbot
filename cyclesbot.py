@@ -7,6 +7,13 @@ import matplotlib.pyplot as plt
 import csv
 import os.path
 from os import path
+from Tkinter import *
+import ttk
+from matplotlib.figure import Figure 
+from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg,  
+NavigationToolbar2Tk) 
+
+graphExists = False
 
 ## SET MAX WIDTH HERE
 maxwidth = 100
@@ -138,6 +145,63 @@ def useData():
     if val != "N" and val != "Y":
         print "Invalid Input"
         useData()
+
+def Readstatus(key):
+    for i in root.winfo_children():
+        if i.winfo_class() == 'Canvas' or i.winfo_class() == 'Frame':
+            i.destroy() 
+    
+    yaCycles = []
+    
+    for i in range(len(tp)):    
+        var_obj = var.get(i)  
+        #print i, var_obj.get(), tp[i][0]
+        if var_obj.get() == 1:
+            specificCycle = createsin(tp[i][0],len(prices2*2))
+            shiftleft(specificCycle,tp[i][1])
+            yaCycles.append(specificCycle)
+
+    var_obj = var.get('UD')
+    if len(yaCycles) > 0:
+        if var_obj.get() == 0:
+            Flist = average(yaCycles)
+        else:
+            specificCycle = createsin(20000,len(prices2*2))
+            shiftleft(specificCycle,1000)
+            Flist = average([average(yaCycles),specificCycle])
+    else:
+        Flist = []
+    
+    fig, ax1 = plt.subplots(2)
+    fig.suptitle('Vertically stacked subplots')
+    ax1[0].set_yscale('log')
+    ax1[0].set_ylim([1,5000000])
+    #ax1[1].set_ylim([-0.3,0.6])
+    ax1[1].plot(amp, color="blue")
+    ax1[1].scatter(xlist,ylist, color='r')
+    ax1[1].scatter(xsmall,ysmall, color='green')
+    ax1[0].plot(prices2)
+    ax2 = ax1[0].twinx()
+    #ax1[1].set_yscale('log')
+    #ax2.set_ylim([0.01,1])
+    ax2.plot(Flist, color="red") 
+  
+    # creating the Tkinter canvas 
+    # containing the Matplotlib figure 
+    canvas = FigureCanvasTkAgg(fig, 
+                               master = root)    
+    canvas.draw() 
+  
+    # placing the canvas on the Tkinter window 
+    canvas.get_tk_widget().pack() 
+  
+    # creating the Matplotlib toolbar 
+    toolbar = NavigationToolbar2Tk(canvas, 
+                                   root) 
+    toolbar.update() 
+  
+    # placing the toolbar on the Tkinter window 
+    canvas.get_tk_widget().pack()
 
 if __name__ == '__main__':
     
@@ -314,27 +378,57 @@ if __name__ == '__main__':
     else:
         zlist = olist
 
-    #while len(olist) > len(prices2):
-        #olist.pop()
+    while len(zlist) > len(prices2):
+        zlist.pop()
+
+    print
+    print
+    specificCycle = createsin(tp[0][0],10000)
+    shiftleft(specificCycle,tp[0][1])
 
 
     #print tpamp
 
-    fig, ax1 = plt.subplots(2)
-    fig.suptitle('Vertically stacked subplots')
-    ax1[0].set_yscale('log')
-    ax1[0].set_ylim([1,5000000])
-    #ax1[1].set_ylim([-0.3,0.6])
-    ax1[1].plot(amp, color="blue")
-    ax1[1].scatter(xlist,ylist, color='r')
-    ax1[1].scatter(xsmall,ysmall, color='green')
-    ax1[0].plot(prices2)
-    ax2 = ax1[0].twinx()
-    #ax1[1].set_yscale('log')
-    #ax2.set_ylim([0.01,1])
-    ax2.plot(zlist, color="red")
+##    fig, ax1 = plt.subplots(2)
+##    fig.suptitle('Vertically stacked subplots')
+##    ax1[0].set_yscale('log')
+##    ax1[0].set_ylim([1,5000000])
+##    #ax1[1].set_ylim([-0.3,0.6])
+##    ax1[1].plot(amp, color="blue")
+##    ax1[1].scatter(xlist,ylist, color='r')
+##    ax1[1].scatter(xsmall,ysmall, color='green')
+##    ax1[0].plot(prices2)
+##    ax2 = ax1[0].twinx()
+##    #ax1[1].set_yscale('log')
+##    #ax2.set_ylim([0.01,1])
+##    ax2.plot(specificCycle, color="red")
+
+    root = Tk()
+
+    premadeList = range(len(tp))
+
+    #for i in tp:
+        #premadeList.append(i[0])
+
+    var = dict()
+    count=1
+
+    for i in premadeList:
+        var[i]=IntVar()
+        chk = Checkbutton(root, text=tp[i][0], variable=var[i], 
+                          command=lambda key=i: Readstatus(key))
+        count += 1
+        chk.pack()
+
+    var['UD'] = IntVar()
+    upDrift = Checkbutton(root, text='upDrift', variable=var['UD'], 
+                          command=lambda key='UD': Readstatus(key))
+    upDrift.pack()
+    
+    Readstatus(0)
+
+    root.mainloop()
 
 
-    #plt.plot(amp)
-    plt.show()
 
+    #plt.show()
