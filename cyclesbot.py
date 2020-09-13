@@ -9,11 +9,9 @@ import os.path
 from os import path
 from Tkinter import *
 import ttk
+from scipy.optimize import curve_fit
 from matplotlib.figure import Figure 
-from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg,  
-NavigationToolbar2Tk) 
-
-graphExists = False
+from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk) 
 
 ## SET MAX WIDTH HERE
 maxwidth = 100
@@ -146,7 +144,10 @@ def useData():
         print "Invalid Input"
         useData()
 
-def Readstatus(key):
+def func(x,a,b):
+    return a*np.log(x)+ b
+
+def Readstatus(key, count, key2):
     for i in root.winfo_children():
         if i.winfo_class() == 'Canvas' or i.winfo_class() == 'Frame':
             i.destroy() 
@@ -161,6 +162,15 @@ def Readstatus(key):
             shiftleft(specificCycle,tp[i][1])
             yaCycles.append(specificCycle)
 
+    eCycles = []
+
+    for i in range(len(tp)):    
+        var_obj = var2.get(i)  
+        if var_obj.get() == 1:
+            specificCycle = createsin(tp[i][0],len(prices2*2))
+            shiftleft(specificCycle,tp[i][1])
+            eCycles.append(specificCycle)
+
     var_obj = var.get('UD')
     if len(yaCycles) > 0:
         if var_obj.get() == 0:
@@ -169,8 +179,26 @@ def Readstatus(key):
             specificCycle = createsin(20000,len(prices2*2))
             shiftleft(specificCycle,1000)
             Flist = average([average(yaCycles),specificCycle])
+        if len(eCycles) > 0:
+            Flist = average([Flist,average(eCycles)])
     else:
-        Flist = []
+        if var_obj.get() == 1:
+            specificCycle = createsin(20000,len(prices2*2))
+            shiftleft(specificCycle,1000)
+            Flist = specificCycle
+        else:
+            Flist = []
+##    xdata=range(1,len(prices2[500:-1])+1)
+##    #print xdata
+##    ydata=prices2[500:-1]
+##    #print ydata
+##
+##    x = np.array(xdata, dtype=float) #transform your data in a numpy array of floats 
+##    y = np.array(ydata, dtype=float) #so the curve_fit can work
+##
+##    popt, pcov = curve_fit(func, x, y)
+##    x_sorted = np.sort(x)
+##    #Flist = func(x, *popt)
     
     fig, ax1 = plt.subplots(2)
     fig.suptitle('Vertically stacked subplots')
@@ -188,20 +216,18 @@ def Readstatus(key):
   
     # creating the Tkinter canvas 
     # containing the Matplotlib figure 
-    canvas = FigureCanvasTkAgg(fig, 
-                               master = root)    
+    canvas = FigureCanvasTkAgg(fig, master = root)    
     canvas.draw() 
   
     # placing the canvas on the Tkinter window 
-    canvas.get_tk_widget().pack() 
+    canvas.get_tk_widget().grid(row = 2, rowspan=count, column = 0, pady = 2) 
   
     # creating the Matplotlib toolbar 
-    toolbar = NavigationToolbar2Tk(canvas, 
-                                   root) 
-    toolbar.update() 
+    #toolbar = NavigationToolbar2Tk(canvas, root) 
+    #toolbar.update() 
   
     # placing the toolbar on the Tkinter window 
-    canvas.get_tk_widget().pack()
+    #canvas.get_tk_widget().grid(row = 3, column = 0, pady = 2)
 
 if __name__ == '__main__':
     
@@ -405,30 +431,33 @@ if __name__ == '__main__':
 
     root = Tk()
 
-    premadeList = range(len(tp))
-
-    #for i in tp:
-        #premadeList.append(i[0])
-
     var = dict()
+
+    var['UD'] = IntVar()
+    upDrift = Checkbutton(root, text='upDrift', variable=var['UD'], 
+                          command=lambda key='UD': Readstatus(key, count - 1, 0))
+    upDrift.grid(row = 0, column = 1, pady = 2)
+
+    premadeList = range(len(tp))
+    
     count=1
 
     for i in premadeList:
         var[i]=IntVar()
         chk = Checkbutton(root, text=tp[i][0], variable=var[i], 
-                          command=lambda key=i: Readstatus(key))
+                          command=lambda key=i: Readstatus(key, count - 1, 0))
         count += 1
-        chk.pack()
+        chk.grid(row = count - 1, column = 1, pady = 2)
 
-    var['UD'] = IntVar()
-    upDrift = Checkbutton(root, text='upDrift', variable=var['UD'], 
-                          command=lambda key='UD': Readstatus(key))
-    upDrift.pack()
-    
-    Readstatus(0)
+    var2 = dict()
+    count=1
+    for i in premadeList:
+        var2[i]=IntVar()
+        chk = Checkbutton(root, text=tp[i][0], variable=var2[i], 
+                          command=lambda key=i: Readstatus(0, count -1, key))
+        count += 1
+        chk.grid(row = count - 1, column = 2, pady = 2)
+
+    Readstatus(0, count - 1, 0)
 
     root.mainloop()
-
-
-
-    #plt.show()
