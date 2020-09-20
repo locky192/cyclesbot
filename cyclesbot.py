@@ -14,7 +14,7 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk) 
 
 ## SET MAX WIDTH HERE
-maxwidth = 100
+maxwidth = 1000
 
 # Download latest BTC price data from quandl
 quandl.ApiConfig.api_key = "dRsdc8njMS4QHeKqoJy-"
@@ -160,7 +160,10 @@ def Readstatus(key, count, key2):
         if var_obj.get() == 1:
             specificCycle = createsin(tp[i][0],len(prices2*2))
             shiftleft(specificCycle,tp[i][1])
-            yaCycles.append(specificCycle)
+            ee = []
+            for k in specificCycle:
+                ee.append(k*0.2)
+            yaCycles.append(ee)
 
     eCycles = []
 
@@ -169,25 +172,65 @@ def Readstatus(key, count, key2):
         if var_obj.get() == 1:
             specificCycle = createsin(tp[i][0],len(prices2*2))
             shiftleft(specificCycle,tp[i][1])
-            eCycles.append(specificCycle)
+            ee = []
+            for k in specificCycle:
+                ee.append(k*0.2)
+            eCycles.append(ee)
 
+    x = np.linspace(0,5000)
     var_obj = var.get('UD')
+    Ff = []
     if len(yaCycles) > 0:
         if var_obj.get() == 0:
             Flist = average(yaCycles)
         else:
-            specificCycle = createsin(20000,len(prices2*2))
-            shiftleft(specificCycle,1000)
-            Flist = average([average(yaCycles),specificCycle])
+##            specificCycle = createsin(15000,len(prices2*2))
+##            shiftleft(specificCycle,1000)
+            f = lambda x,a : a * x**2
+            a=3.1
+            x = np.linspace(0,10000,10000)
+            y =  f(x,a)
+            y2 = np.log10(y)
+            specificCycle = y2
+            Ff = []
+            for i in specificCycle:
+                Ff.append(i-7)
+            shiftleft(Ff,2000)
+            Flist = []
+            j = 0
+            for i in average(yaCycles):
+                Flist.append(i+Ff[j])
+                j = j + 1
+            #Flist = average([average(yaCycles),Ff])
+            #Flist = average([Flist,Ff])
         if len(eCycles) > 0:
-            Flist = average([Flist,average(eCycles)])
+            kk = []
+            j = 0
+            for i in average(eCycles):
+                kk.append(i+Ff[j])
+                j = j + 1
+            Flist = average([Flist,kk])
     else:
         if var_obj.get() == 1:
-            specificCycle = createsin(20000,len(prices2*2))
-            shiftleft(specificCycle,1000)
-            Flist = specificCycle
-        else:
+            #specificCycle = createsin(20000,len(prices2*2))
+            #shiftleft(specificCycle,1000)
+            f = lambda x,a : a * x**2
+            a=3.1
+            x = np.linspace(0,10000,10000)
+            y =  f(x,a)
+            y2 = np.log10(y)
+            specificCycle = y2
             Flist = []
+            for i in specificCycle:
+                Flist.append(i-7.1)
+            shiftleft(Flist,2000)
+
+            #Flist = specificCycle
+        else:
+            Flist = range(len(x))
+
+    #print len(Flist)
+    #print len(x)
 ##    xdata=range(1,len(prices2[500:-1])+1)
 ##    #print xdata
 ##    ydata=prices2[500:-1]
@@ -211,8 +254,11 @@ def Readstatus(key, count, key2):
     ax1[0].plot(prices2)
     ax2 = ax1[0].twinx()
     #ax1[1].set_yscale('log')
-    #ax2.set_ylim([0.01,1])
-    ax2.plot(Flist, color="red") 
+    ax2.set_ylim([0,1.5])
+    ax2.plot(Flist, color="red")
+    #ax2.plot(Ff, color="red")
+   # if len(yaCycles) > 0:
+        #ax2.plot(yaCycles[0], color="blue")
   
     # creating the Tkinter canvas 
     # containing the Matplotlib figure 
